@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
   <!-- The ?v= number makes browsers fetch this file again when it changes, so a new page
        never runs with an old copy of the CSS kept in the browser's cache. -->
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <div class="layout">
@@ -29,13 +29,62 @@
         apart, and click a sale to see its details.
       </p>
 
-      <div class="filter">
-        <label class="eyebrow" for="university">University</label>
-        <select id="university">
-          <option value="">All universities</option>
-        </select>
+      <form class="filters" id="filters" novalidate>
+        <div class="filter">
+          <label class="eyebrow" for="university">University</label>
+          <select id="university">
+            <option value="">All universities</option>
+          </select>
+        </div>
+
+        <fieldset class="filter">
+          <legend class="eyebrow">Price range</legend>
+          <div class="price-inputs">
+            <label class="visually-hidden" for="price-min">Minimum price in dollars</label>
+            <input id="price-min" type="number" inputmode="numeric" min="0" step="1000" placeholder="Min $">
+            <span class="price-dash" aria-hidden="true">–</span>
+            <label class="visually-hidden" for="price-max">Maximum price in dollars</label>
+            <input id="price-max" type="number" inputmode="numeric" min="0" step="1000" placeholder="Max $">
+          </div>
+          <p class="filter-hint" id="price-hint" aria-live="polite"></p>
+        </fieldset>
+
+        <div class="filter">
+          <label class="eyebrow" for="beds">Bedrooms</label>
+          <select id="beds">
+            <option value="">Any</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5+">5+</option>
+          </select>
+        </div>
+
+        <div class="filter">
+          <label class="eyebrow" for="distance">Distance to campus</label>
+          <select id="distance">
+            <option value="">Any</option>
+            <option value="lt1">Under 1 mile</option>
+            <option value="1to3">1–3 miles</option>
+            <option value="3to5">3–5 miles</option>
+            <option value="gt5">Over 5 miles</option>
+          </select>
+        </div>
+
+        <div class="filter">
+          <label class="eyebrow" for="year">Year built</label>
+          <select id="year">
+            <option value="">Any</option>
+            <option value="lt1970">Before 1970</option>
+            <option value="1970to1999">1970–1999</option>
+            <option value="ge2000">2000 or later</option>
+          </select>
+        </div>
+
+        <button type="reset" class="reset-button" id="reset-filters">Reset filters</button>
         <p id="status" aria-live="polite">Loading sales…</p>
-      </div>
+      </form>
 
       <figure class="promo">
         <svg class="promo-art" viewBox="0 0 320 170" aria-hidden="true" focusable="false">
@@ -98,6 +147,35 @@
           </g>
         </svg>
       </div>
+      <section class="cards" aria-label="Summary of the sales shown" aria-live="polite">
+        <div class="card-row" id="card-row">
+          <div class="card">
+            <p class="card-label eyebrow">Sales shown</p>
+            <p class="card-value" id="card-count">…</p>
+            <p class="card-sub" id="card-count-sub">&nbsp;</p>
+          </div>
+          <div class="card card-navy">
+            <p class="card-label eyebrow">Median price</p>
+            <p class="card-value" id="card-median">…</p>
+            <p class="card-sub">Half sold for more, half for less</p>
+          </div>
+          <div class="card">
+            <p class="card-label eyebrow">Price range</p>
+            <p class="card-value card-value-range" id="card-range">…</p>
+            <p class="card-sub">Lowest to highest sale</p>
+          </div>
+          <div class="card">
+            <p class="card-label eyebrow">Median size</p>
+            <p class="card-value" id="card-size">…</p>
+            <p class="card-sub">Bedrooms · bathrooms</p>
+          </div>
+        </div>
+        <div class="cards-empty" id="cards-empty" hidden>
+          <p class="cards-empty-title">No sales match these filters</p>
+          <p class="cards-empty-text">Try a wider price range or another option, or
+            <button type="button" class="link-button" id="empty-reset">reset all filters</button>.</p>
+        </div>
+      </section>
       <div id="map" role="region" aria-label="Map of home sales"></div>
     </main>
   </div>
@@ -131,6 +209,22 @@
           listing ID, so points at the same spot can be separate homes.
         </li>
         <li>
+          <strong>Filters and missing values.</strong> All filters combine with each other and
+          with the university filter. A sale with no value in a field is left out only while
+          a filter on that field is active. For example, <span data-fill="missing_year">…</span>
+          with no recorded year built drops out when you choose a year range, and stays in when
+          Year built is set to Any. Distance bands are straight-line miles: under 1 is less than
+          1.0; 1–3 is 1.0 up to but not including 3.0; 3–5 is 3.0 to 5.0; over 5 is more than 5.0.
+          Price limits include the amounts you type.
+        </li>
+        <li>
+          <strong>Summary cards.</strong> The cards describe the sales that match the filters.
+          A median is the middle value: when there is an even number of sales, it is the average
+          of the two middle values, so it can fall between two real values, such as 2.25 bathrooms
+          or a price ending in 50 cents (prices are shown rounded to the nearest dollar). The median bathrooms leave out the
+          <span data-fill="missing_baths">…</span> with no recorded number of bathrooms.
+        </li>
+        <li>
           <strong>Cluster colours.</strong> A cluster's colour shows how many sales it groups at
           the current zoom level, from beige for a few to navy for many. It says nothing about
           prices.
@@ -147,6 +241,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
   <!-- See the note on css/style.css above: change ?v= whenever js/map.js changes. -->
-  <script src="js/map.js?v=3"></script>
+  <script src="js/map.js?v=4"></script>
 </body>
 </html>
