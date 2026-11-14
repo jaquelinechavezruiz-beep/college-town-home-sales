@@ -1,4 +1,4 @@
-"""Make data/map_sales.json, the small data file the map page reads.
+"""Make data/map_sales.json, the small data file the site reads.
 
 Reads data/college_town_home_sales.csv (never changes it) and keeps only the
 columns the map needs. Applies the site's price rule: sales under $10,000 or
@@ -23,7 +23,8 @@ MAX_PRICE = 5_000_000   # sales above this are excluded
 
 # Columns written for each sale, in this order
 COLUMNS = ["listing_id", "latitude", "longitude", "city", "state",
-           "university", "sale_price", "beds", "baths", "sale_date"]
+           "university", "sale_price", "beds", "baths", "sale_date",
+           "miles_to_campus", "year_built"]
 
 
 def number(text):
@@ -64,6 +65,8 @@ def main():
                 number(r["beds"]),
                 number(r["baths"]),
                 r["sale_date"] or None,
+                number(r["miles_to_campus"]),
+                number(r["year_built"]),
             ])
 
     data = {
