@@ -40,7 +40,7 @@ _Replace this line. Say which rows you left out and why, and how each figure on 
 
 ## How the map data is made
 
-The map reads `data/map_sales.json`, which `scripts/make_map_data.py` makes from `data/college_town_home_sales.csv`. It keeps only the columns the map needs and leaves out sales under $10,000 or over $5,000,000. To make the file again, run this from the repository root (it needs only Python 3):
+The map reads `data/map_sales.json`, which `scripts/make_map_data.py` makes from `data/college_town_home_sales.csv`. It keeps only the columns the site needs (location, city, university, price, bedrooms, bathrooms, sale date, miles to campus and year built) and leaves out sales under $10,000 or over $5,000,000. To make the file again, run this from the repository root (it needs only Python 3):
 
 ```
 python3 scripts/make_map_data.py
