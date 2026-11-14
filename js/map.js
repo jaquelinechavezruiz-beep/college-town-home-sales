@@ -34,13 +34,13 @@ function formatDate(iso) {
 function popupHtml(s) {
   const show = (v) => (v === null || v === undefined ? "Not recorded" : v);
   return `<div class="popup">
-    <div class="popup-city">${escapeHtml(s.city)}, ${escapeHtml(s.state)}</div>
     <div class="popup-price">${money.format(s.sale_price)}</div>
-    <dl>
-      <dt>Bedrooms</dt><dd>${show(s.beds)}</dd>
-      <dt>Bathrooms</dt><dd>${show(s.baths)}</dd>
-      <dt>Sale date</dt><dd>${formatDate(s.sale_date)}</dd>
-    </dl>
+    <ul class="popup-list">
+      <li><span class="key">City:</span> ${escapeHtml(s.city)}, ${escapeHtml(s.state)}</li>
+      <li><span class="key">Bedrooms:</span> ${show(s.beds)}</li>
+      <li><span class="key">Bathrooms:</span> ${show(s.baths)}</li>
+      <li><span class="key">Sale date:</span> ${formatDate(s.sale_date)}</li>
+    </ul>
   </div>`;
 }
 
@@ -51,7 +51,7 @@ function showSales(university) {
   const chosen = university ? sales.filter((s) => s.university === university) : sales;
   const markers = chosen.map((s) =>
     L.circleMarker([s.latitude, s.longitude], {
-      radius: 6, weight: 1, color: "#ffffff", fillColor: "#2a6fdb", fillOpacity: 0.9,
+      radius: 6, weight: 1.5, color: "#ffffff", fillColor: "#34446A", fillOpacity: 0.95,
     }).bindPopup(() => popupHtml(s))
   );
   clusters.addLayers(markers);
@@ -68,7 +68,12 @@ function showSales(university) {
 }
 
 function fillDataNotes(data) {
+  const campuses = Object.keys(data.universities).length;
+  document.getElementById("summary").textContent =
+    `${count.format(data.counts.rows_kept)} home sales · ${count.format(campuses)} campuses`;
+
   const values = {
+    campuses: count.format(campuses),
     min_price: money.format(data.price_rule.min_price),
     max_price: money.format(data.price_rule.max_price),
     ...Object.fromEntries(
