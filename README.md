@@ -38,6 +38,14 @@ https://your-username.github.io/your-repo-name/
 
 _Replace this line. Say which rows you left out and why, and how each figure on the site is defined. "Five things that will bite you" in the description sheet lists the problems to cover._
 
+## How the map data is made
+
+The map reads `data/map_sales.json`, which `scripts/make_map_data.py` makes from `data/college_town_home_sales.csv`. It keeps only the columns the map needs and leaves out sales under $10,000 or over $5,000,000. To make the file again, run this from the repository root (it needs only Python 3):
+
+```
+python3 scripts/make_map_data.py
+```
+
 ## Tools we used
 
 _Replace this line with your AI coding agent or agents, and any libraries and other tools you used._
