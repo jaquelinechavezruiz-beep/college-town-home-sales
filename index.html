@@ -5,120 +5,241 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>College Town Home Explorer</title>
   <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@300;500;600&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
   <style>
     :root {
-      --bg: #ffffff;
-      --text: #1d1d1f;
-      --muted: #5c5c66;
-      --border: #d9d9e0;
-      --panel: #f5f5f8;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #16161a;
-        --text: #ececf1;
-        --muted: #a3a3ad;
-        --border: #34343c;
-        --panel: #202026;
-      }
+      color-scheme: light;
+      --navy: #34446A;
+      --navy-dark: #26324F;
+      --slate: #68759A;      /* close to #6E7A99, dark enough for white text */
+      --light: #E8E8E8;
+      --white: #FFFFFF;
+      --text: #1F2533;
+      --muted: #4A5268;
+      --display: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
+      --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--bg);
+      background: var(--light);
       color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      line-height: 1.5;
+      font-family: var(--body);
+      line-height: 1.55;
     }
-    .wrap { max-width: 64rem; margin: 0 auto; padding: 2rem 1rem; }
-    h1 { margin: 0 0 0.25rem; font-size: 2rem; }
-    h2 { margin-top: 2.5rem; font-size: 1.35rem; }
-    .lede { margin: 0 0 1.5rem; color: var(--muted); max-width: 44rem; }
-    .controls {
-      display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center;
-      padding: 0.75rem 1rem; margin-bottom: 0.75rem;
-      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+
+    /* Small uppercase labels with wide letter spacing */
+    .eyebrow {
+      font-family: var(--body);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
-    .controls label { font-weight: 600; }
-    .controls select {
-      font: inherit; padding: 0.35rem 0.5rem; max-width: 100%;
-      border: 1px solid var(--border); border-radius: 6px;
-      background: var(--bg); color: var(--text);
+
+    /* Two columns: side panel and map */
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      min-height: 100vh;
     }
-    #status { color: var(--muted); }
+
+    .panel {
+      background: var(--slate);
+      color: var(--white);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+    .panel .eyebrow { color: rgba(255, 255, 255, 0.85); margin: 0; }
+    .title {
+      margin: 0;
+      font-family: var(--display);
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+    .title .line1 { display: block; font-size: 3rem; font-weight: 600; }
+    .title .line2 { display: block; font-size: 2.6rem; font-weight: 300; }
+    .rule { width: 3rem; height: 4px; background: var(--white); border: 0; margin: 0; }
+    .lede { margin: 0; font-size: 1rem; }
+
+    .filter { display: flex; flex-direction: column; gap: 0.5rem; }
+    .filter label { color: var(--white); }
+    .filter select {
+      font: 500 0.95rem var(--body);
+      color: var(--navy);
+      background: var(--white);
+      border: 2px solid var(--white);
+      border-radius: 4px;
+      padding: 0.6rem 0.7rem;
+      width: 100%;
+      cursor: pointer;
+    }
+    .filter select:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+    #status { margin: 0; font-size: 0.875rem; color: rgba(255, 255, 255, 0.9); }
+
+    .map-area { display: flex; flex-direction: column; min-width: 0; }
+    .map-bar {
+      background: var(--navy);
+      color: var(--white);
+      padding: 0.9rem 1.5rem;
+      margin: 0;
+    }
     #map {
-      height: 70vh; min-height: 420px; width: 100%;
-      border: 1px solid var(--border); border-radius: 8px;
+      flex: 1;
+      min-height: 420px;
+      width: 100%;
+      background: var(--light);
     }
-    .popup-city { font-weight: 700; font-size: 1rem; }
-    .popup-price { font-size: 1.1rem; margin: 0.15rem 0 0.35rem; }
-    .popup dl { display: grid; grid-template-columns: auto auto; gap: 0 0.75rem; margin: 0; }
-    .popup dt { color: #5c5c66; }
-    .popup dd { margin: 0; }
-    .notes li { margin-bottom: 0.5rem; }
-    footer { margin-top: 3rem; font-size: 0.875rem; color: var(--muted); }
+
+    /* Popup: navy price tag and a bulleted list */
+    .leaflet-popup-content-wrapper { border-radius: 4px; padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; font-family: var(--body); min-width: 200px; }
+    .popup-price {
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--display);
+      font-size: 1.75rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      padding: 0.55rem 1rem;
+    }
+    .popup-list { margin: 0; padding: 0.75rem 1rem 0.85rem 2rem; color: var(--text); font-size: 0.9rem; }
+    .popup-list li { margin: 0.15rem 0; }
+    .popup-list li::marker { color: var(--navy); }
+    .popup-list .key { color: var(--muted); }
+    .leaflet-container a.leaflet-popup-close-button { color: var(--white); }
+
+    /* Marker clusters in shades of navy */
+    .marker-cluster-small { background-color: rgba(104, 117, 154, 0.45); }
+    .marker-cluster-small div { background-color: rgba(104, 117, 154, 0.9); }
+    .marker-cluster-medium { background-color: rgba(52, 68, 106, 0.4); }
+    .marker-cluster-medium div { background-color: rgba(52, 68, 106, 0.88); }
+    .marker-cluster-large { background-color: rgba(38, 50, 79, 0.45); }
+    .marker-cluster-large div { background-color: rgba(38, 50, 79, 0.95); }
+    .marker-cluster div { color: var(--white); font: 600 12px var(--body); }
+    /* Large clusters can hold five-digit counts: smaller text so they fit the circle */
+    .marker-cluster-large div { font-size: 9.5px; letter-spacing: -0.02em; }
+
+    /* Data notes */
+    .notes-wrap { padding: 3rem 1.5rem 1rem; }
+    .notes {
+      max-width: 64rem;
+      margin: 0 auto;
+      background: var(--white);
+      border-top: 6px solid var(--navy);
+      border-radius: 4px;
+      padding: 2rem 2rem 1.25rem;
+    }
+    .notes .eyebrow { color: var(--slate); margin: 0 0 0.25rem; }
+    .notes h2 {
+      margin: 0 0 1rem;
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--navy);
+    }
+    .notes ul { padding-left: 1.2rem; margin: 0; }
+    .notes li { margin-bottom: 0.75rem; }
+    .notes li::marker { color: var(--navy); }
+    .notes strong { color: var(--navy); }
+
+    footer {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 2.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* Phones and narrow screens: one column */
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; min-height: 0; }
+      .panel { padding: 2rem 1rem; gap: 1.25rem; }
+      .title .line1 { font-size: 2.5rem; }
+      .title .line2 { font-size: 2.15rem; }
+      .map-bar { padding: 0.8rem 1rem; }
+      #map { flex: none; height: 65vh; min-height: 360px; }
+      .notes-wrap { padding: 2rem 1rem 0.5rem; }
+      .notes { padding: 1.5rem 1rem 0.75rem; }
+      footer { padding: 1rem 1rem 2rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>College Town Home Explorer</h1>
+  <div class="layout">
+    <aside class="panel">
+      <p class="eyebrow">Home sales · College towns</p>
+      <h1 class="title">
+        <span class="line1">College Town</span>
+        <span class="line2">Home Explorer</span>
+      </h1>
+      <hr class="rule">
       <p class="lede">
-        Explore home sales around 11 university campuses in the United States.
+        Explore home sales around <span data-fill="campuses">…</span> university campuses in the United States.
         Each point is one completed sale. Zoom in to break the clusters apart,
         and click a sale to see its details.
       </p>
-    </header>
-
-    <main>
-      <div class="controls">
-        <label for="university">University</label>
+      <div class="filter">
+        <label class="eyebrow" for="university">University</label>
         <select id="university">
           <option value="">All universities</option>
         </select>
-        <span id="status" aria-live="polite">Loading sales…</span>
+        <p id="status" aria-live="polite">Loading sales…</p>
       </div>
+    </aside>
 
+    <main class="map-area">
+      <p class="map-bar eyebrow" id="summary">Loading…</p>
       <div id="map" role="region" aria-label="Map of home sales"></div>
-
-      <section class="notes" id="data-notes">
-        <h2>Data notes</h2>
-        <ul>
-          <li>
-            <strong>Price rule.</strong> Some sale prices in the dataset are impossible,
-            including a sale at $0 and one at more than $80 million. This site leaves out every
-            sale under <span data-fill="min_price">…</span> and every sale over
-            <span data-fill="max_price">…</span>.
-            That removes <span data-fill="excluded_below_min">…</span> sales below the minimum and
-            <span data-fill="excluded_above_max">…</span> above the maximum, so the map shows
-            <span data-fill="rows_kept">…</span> of the <span data-fill="rows_in_dataset">…</span>
-            sales in the dataset.
-          </li>
-          <li>
-            <strong>University.</strong> Each sale belongs to its nearest campus, measured in a
-            straight line from the home's coordinates. The city name plays no part.
-          </li>
-          <li>
-            <strong>Missing values.</strong> When a sale has no recorded sale date or number of
-            bathrooms, its popup says "Not recorded".
-          </li>
-          <li>
-            <strong>Shared addresses.</strong> Some different homes, mostly condo units in
-            State College, share one street address. Every sale is kept and identified by its
-            listing ID, so points at the same spot can be separate homes.
-          </li>
-        </ul>
-      </section>
     </main>
-
-    <footer>
-      <p>Data: College-town home sales dataset, version 1.0 (2026). University of Illinois-Deloitte
-      Foundation Center for Business Emerging Technologies. Data collected March 2026.</p>
-    </footer>
   </div>
+
+  <div class="notes-wrap">
+    <section class="notes" id="data-notes">
+      <p class="eyebrow">About the data</p>
+      <h2>Data notes</h2>
+      <ul>
+        <li>
+          <strong>Price rule.</strong> Some sale prices in the dataset are impossible,
+          including a sale at $0 and one at more than $80 million. This site leaves out every
+          sale under <span data-fill="min_price">…</span> and every sale over
+          <span data-fill="max_price">…</span>.
+          That removes <span data-fill="excluded_below_min">…</span> sales below the minimum and
+          <span data-fill="excluded_above_max">…</span> above the maximum, so the map shows
+          <span data-fill="rows_kept">…</span> of the <span data-fill="rows_in_dataset">…</span>
+          sales in the dataset.
+        </li>
+        <li>
+          <strong>University.</strong> Each sale belongs to its nearest campus, measured in a
+          straight line from the home's coordinates. The city name plays no part.
+        </li>
+        <li>
+          <strong>Missing values.</strong> When a sale has no recorded sale date or number of
+          bathrooms, its popup says "Not recorded".
+        </li>
+        <li>
+          <strong>Shared addresses.</strong> Some different homes, mostly condo units in
+          State College, share one street address. Every sale is kept and identified by its
+          listing ID, so points at the same spot can be separate homes.
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>Data: College-town home sales dataset, version 1.0 (2026). University of Illinois-Deloitte
+    Foundation Center for Business Emerging Technologies. Data collected March 2026.</p>
+  </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
