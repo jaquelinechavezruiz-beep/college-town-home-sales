@@ -14,6 +14,7 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 const statusEl = document.getElementById("status");
 const selectEl = document.getElementById("university");
+const summaryEl = document.getElementById("summary");
 let clusters = null;
 let sales = [];
 
@@ -34,24 +35,67 @@ function formatDate(iso) {
 function popupHtml(s) {
   const show = (v) => (v === null || v === undefined ? "Not recorded" : v);
   return `<div class="popup">
-    <div class="popup-price">${money.format(s.sale_price)}</div>
-    <ul class="popup-list">
-      <li><span class="key">City:</span> ${escapeHtml(s.city)}, ${escapeHtml(s.state)}</li>
+    <div class="popup-head">
+      <span class="popup-label eyebrow">Sold for</span>
+      <span class="popup-price">${money.format(s.sale_price)}</span>
+    </div>
+    <div class="popup-body">
+      <p class="popup-city">${escapeHtml(s.city)}, ${escapeHtml(s.state)}</p>
+      <ul class="popup-list">
       <li><span class="key">Bedrooms:</span> ${show(s.beds)}</li>
       <li><span class="key">Bathrooms:</span> ${show(s.baths)}</li>
       <li><span class="key">Sale date:</span> ${formatDate(s.sale_date)}</li>
-    </ul>
+      </ul>
+    </div>
   </div>`;
 }
 
+// Cluster colours by how many sales a cluster holds: beige (few) to navy (many).
+// These cut-offs only set the colour; they are not taken from the data.
+const CLUSTER_TIERS = [
+  { max: 9, label: "2–9", color: "#D9C3A5" },
+  { max: 99, label: "10–99", color: "#B08A62" },
+  { max: 999, label: "100–999", color: "#5A6F96" },
+  { max: Infinity, label: "1,000+", color: "#2E4066" },
+];
+const CLUSTER_SIZES = [34, 40, 46, 54];
+
+function clusterIcon(cluster) {
+  const n = cluster.getChildCount();
+  const tier = CLUSTER_TIERS.findIndex((t) => n <= t.max);
+  const size = CLUSTER_SIZES[tier];
+  return L.divIcon({
+    html: `<span>${count.format(n)}</span>`,
+    className: `cluster cluster-${tier + 1}`,
+    iconSize: L.point(size, size),
+  });
+}
+
+const legend = L.control({ position: "bottomright" });
+legend.onAdd = () => {
+  const div = L.DomUtil.create("div", "legend");
+  div.innerHTML = `
+    <p class="legend-title eyebrow">Sales per cluster</p>
+    <div class="legend-scale">
+      ${CLUSTER_TIERS.map((t) => `
+        <div class="legend-step">
+          <span class="legend-swatch" style="background:${t.color}"></span>
+          <span class="legend-range">${t.label}</span>
+        </div>`).join("")}
+    </div>
+    <div class="legend-ends"><span>Few</span><span>Many</span></div>`;
+  return div;
+};
+legend.addTo(map);
+
 function showSales(university) {
   if (clusters) map.removeLayer(clusters);
-  clusters = L.markerClusterGroup({ chunkedLoading: true });
+  clusters = L.markerClusterGroup({ chunkedLoading: true, iconCreateFunction: clusterIcon });
 
   const chosen = university ? sales.filter((s) => s.university === university) : sales;
   const markers = chosen.map((s) =>
     L.circleMarker([s.latitude, s.longitude], {
-      radius: 6, weight: 1.5, color: "#ffffff", fillColor: "#34446A", fillOpacity: 0.95,
+      radius: 6, weight: 1.5, color: "#ffffff", fillColor: "#2E4066", fillOpacity: 0.95,
     }).bindPopup(() => popupHtml(s))
   );
   clusters.addLayers(markers);
@@ -65,13 +109,16 @@ function showSales(university) {
   }
   const where = university || "all universities";
   statusEl.textContent = `Showing ${count.format(chosen.length)} sales for ${where}`;
+
+  // Summary bar above the map: counts for the sales shown right now
+  const campuses = new Set(chosen.map((s) => s.university)).size;
+  summaryEl.textContent =
+    `${count.format(chosen.length)} home sales · ${count.format(campuses)} ` +
+    (campuses === 1 ? "campus" : "campuses");
 }
 
 function fillDataNotes(data) {
   const campuses = Object.keys(data.universities).length;
-  document.getElementById("summary").textContent =
-    `${count.format(data.counts.rows_kept)} home sales · ${count.format(campuses)} campuses`;
-
   const values = {
     campuses: count.format(campuses),
     min_price: money.format(data.price_rule.min_price),
@@ -108,4 +155,5 @@ fetch("data/map_sales.json")
   })
   .catch((err) => {
     statusEl.textContent = `Could not load the sales data (${err.message}).`;
+    summaryEl.textContent = "Sales data unavailable";
   });

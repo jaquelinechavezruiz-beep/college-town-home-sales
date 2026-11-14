@@ -7,188 +7,28 @@
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@300;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Open+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-  <style>
-    :root {
-      color-scheme: light;
-      --navy: #34446A;
-      --navy-dark: #26324F;
-      --slate: #68759A;      /* close to #6E7A99, dark enough for white text */
-      --light: #E8E8E8;
-      --white: #FFFFFF;
-      --text: #1F2533;
-      --muted: #4A5268;
-      --display: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
-      --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--light);
-      color: var(--text);
-      font-family: var(--body);
-      line-height: 1.55;
-    }
-
-    /* Small uppercase labels with wide letter spacing */
-    .eyebrow {
-      font-family: var(--body);
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    /* Two columns: side panel and map */
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(280px, 360px) 1fr;
-      min-height: 100vh;
-    }
-
-    .panel {
-      background: var(--slate);
-      color: var(--white);
-      padding: 2.5rem 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.75rem;
-    }
-    .panel .eyebrow { color: rgba(255, 255, 255, 0.85); margin: 0; }
-    .title {
-      margin: 0;
-      font-family: var(--display);
-      text-transform: uppercase;
-      line-height: 1;
-      letter-spacing: 0.02em;
-    }
-    .title .line1 { display: block; font-size: 3rem; font-weight: 600; }
-    .title .line2 { display: block; font-size: 2.6rem; font-weight: 300; }
-    .rule { width: 3rem; height: 4px; background: var(--white); border: 0; margin: 0; }
-    .lede { margin: 0; font-size: 1rem; }
-
-    .filter { display: flex; flex-direction: column; gap: 0.5rem; }
-    .filter label { color: var(--white); }
-    .filter select {
-      font: 500 0.95rem var(--body);
-      color: var(--navy);
-      background: var(--white);
-      border: 2px solid var(--white);
-      border-radius: 4px;
-      padding: 0.6rem 0.7rem;
-      width: 100%;
-      cursor: pointer;
-    }
-    .filter select:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
-    #status { margin: 0; font-size: 0.875rem; color: rgba(255, 255, 255, 0.9); }
-
-    .map-area { display: flex; flex-direction: column; min-width: 0; }
-    .map-bar {
-      background: var(--navy);
-      color: var(--white);
-      padding: 0.9rem 1.5rem;
-      margin: 0;
-    }
-    #map {
-      flex: 1;
-      min-height: 420px;
-      width: 100%;
-      background: var(--light);
-    }
-
-    /* Popup: navy price tag and a bulleted list */
-    .leaflet-popup-content-wrapper { border-radius: 4px; padding: 0; overflow: hidden; }
-    .leaflet-popup-content { margin: 0; font-family: var(--body); min-width: 200px; }
-    .popup-price {
-      background: var(--navy);
-      color: var(--white);
-      font-family: var(--display);
-      font-size: 1.75rem;
-      font-weight: 500;
-      letter-spacing: 0.03em;
-      padding: 0.55rem 1rem;
-    }
-    .popup-list { margin: 0; padding: 0.75rem 1rem 0.85rem 2rem; color: var(--text); font-size: 0.9rem; }
-    .popup-list li { margin: 0.15rem 0; }
-    .popup-list li::marker { color: var(--navy); }
-    .popup-list .key { color: var(--muted); }
-    .leaflet-container a.leaflet-popup-close-button { color: var(--white); }
-
-    /* Marker clusters in shades of navy */
-    .marker-cluster-small { background-color: rgba(104, 117, 154, 0.45); }
-    .marker-cluster-small div { background-color: rgba(104, 117, 154, 0.9); }
-    .marker-cluster-medium { background-color: rgba(52, 68, 106, 0.4); }
-    .marker-cluster-medium div { background-color: rgba(52, 68, 106, 0.88); }
-    .marker-cluster-large { background-color: rgba(38, 50, 79, 0.45); }
-    .marker-cluster-large div { background-color: rgba(38, 50, 79, 0.95); }
-    .marker-cluster div { color: var(--white); font: 600 12px var(--body); }
-    /* Large clusters can hold five-digit counts: smaller text so they fit the circle */
-    .marker-cluster-large div { font-size: 9.5px; letter-spacing: -0.02em; }
-
-    /* Data notes */
-    .notes-wrap { padding: 3rem 1.5rem 1rem; }
-    .notes {
-      max-width: 64rem;
-      margin: 0 auto;
-      background: var(--white);
-      border-top: 6px solid var(--navy);
-      border-radius: 4px;
-      padding: 2rem 2rem 1.25rem;
-    }
-    .notes .eyebrow { color: var(--slate); margin: 0 0 0.25rem; }
-    .notes h2 {
-      margin: 0 0 1rem;
-      font-family: var(--display);
-      font-weight: 500;
-      font-size: 2rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--navy);
-    }
-    .notes ul { padding-left: 1.2rem; margin: 0; }
-    .notes li { margin-bottom: 0.75rem; }
-    .notes li::marker { color: var(--navy); }
-    .notes strong { color: var(--navy); }
-
-    footer {
-      max-width: 64rem;
-      margin: 0 auto;
-      padding: 1rem 1.5rem 2.5rem;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    /* Phones and narrow screens: one column */
-    @media (max-width: 800px) {
-      .layout { grid-template-columns: 1fr; min-height: 0; }
-      .panel { padding: 2rem 1rem; gap: 1.25rem; }
-      .title .line1 { font-size: 2.5rem; }
-      .title .line2 { font-size: 2.15rem; }
-      .map-bar { padding: 0.8rem 1rem; }
-      #map { flex: none; height: 65vh; min-height: 360px; }
-      .notes-wrap { padding: 2rem 1rem 0.5rem; }
-      .notes { padding: 1.5rem 1rem 0.75rem; }
-      footer { padding: 1rem 1rem 2rem; }
-    }
-  </style>
+  <!-- The ?v= number makes browsers fetch this file again when it changes, so a new page
+       never runs with an old copy of the CSS kept in the browser's cache. -->
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <div class="layout">
     <aside class="panel">
       <p class="eyebrow">Home sales · College towns</p>
       <h1 class="title">
-        <span class="line1">College Town</span>
-        <span class="line2">Home Explorer</span>
+        <span>College Town</span>
+        <span>Home Explorer</span>
       </h1>
       <hr class="rule">
       <p class="lede">
-        Explore home sales around <span data-fill="campuses">…</span> university campuses in the United States.
-        Each point is one completed sale. Zoom in to break the clusters apart,
-        and click a sale to see its details.
+        Explore home sales around <span data-fill="campuses">…</span> university campuses in
+        the United States. Each point is one completed sale. Zoom in to break the clusters
+        apart, and click a sale to see its details.
       </p>
+
       <div class="filter">
         <label class="eyebrow" for="university">University</label>
         <select id="university">
@@ -196,10 +36,68 @@
         </select>
         <p id="status" aria-live="polite">Loading sales…</p>
       </div>
+
+      <figure class="promo">
+        <svg class="promo-art" viewBox="0 0 320 170" aria-hidden="true" focusable="false">
+          <!-- ground -->
+          <line x1="16" y1="146" x2="304" y2="146" stroke="#2E4066" stroke-width="3" stroke-linecap="round"/>
+          <!-- tall building -->
+          <g fill="none" stroke="#2E4066" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="184" y="28" width="74" height="118"/>
+            <line x1="184" y1="40" x2="258" y2="40"/>
+            <rect x="196" y="52" width="14" height="14"/>
+            <rect x="232" y="52" width="14" height="14"/>
+            <rect x="196" y="78" width="14" height="14"/>
+            <rect x="232" y="78" width="14" height="14"/>
+            <rect x="196" y="104" width="14" height="14"/>
+            <rect x="232" y="104" width="14" height="14"/>
+            <rect x="213" y="126" width="16" height="20"/>
+          </g>
+          <!-- house -->
+          <g fill="none" stroke="#2E4066" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+            <polyline points="52,92 104,52 156,92"/>
+            <rect x="64" y="88" width="80" height="58"/>
+            <rect x="96" y="112" width="18" height="34"/>
+            <rect x="74" y="100" width="14" height="14"/>
+            <rect x="122" y="100" width="14" height="14"/>
+            <polyline points="126,70 126,58 138,58 138,79"/>
+          </g>
+          <!-- keys -->
+          <g fill="none" stroke="#B08A62" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="282" cy="36" r="9"/>
+            <line x1="282" y1="45" x2="282" y2="76"/>
+            <line x1="282" y1="62" x2="290" y2="62"/>
+            <line x1="282" y1="70" x2="288" y2="70"/>
+            <circle cx="282" cy="18" r="6"/>
+            <line x1="282" y1="24" x2="282" y2="27"/>
+          </g>
+        </svg>
+        <figcaption class="promo-card">
+          <span class="promo-title">Find your place near campus</span>
+          <span class="promo-text">Compare real sales across <span data-fill="campuses">…</span> college towns.</span>
+        </figcaption>
+      </figure>
     </aside>
 
     <main class="map-area">
-      <p class="map-bar eyebrow" id="summary">Loading…</p>
+      <div class="map-bar">
+        <p class="eyebrow" id="summary" aria-live="polite">Loading…</p>
+        <svg class="logo" viewBox="0 0 64 40" role="img" aria-label="College Town Home Explorer logo: a house and a tall building">
+          <g fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+            <polyline points="4,22 18,11 32,22"/>
+            <polyline points="8,19 8,37 28,37 28,19"/>
+            <rect x="15" y="27" width="6" height="10"/>
+            <rect x="38" y="3" width="20" height="34"/>
+            <line x1="43" y1="10" x2="46" y2="10"/>
+            <line x1="50" y1="10" x2="53" y2="10"/>
+            <line x1="43" y1="17" x2="46" y2="17"/>
+            <line x1="50" y1="17" x2="53" y2="17"/>
+            <line x1="43" y1="24" x2="46" y2="24"/>
+            <line x1="50" y1="24" x2="53" y2="24"/>
+            <line x1="2" y1="37" x2="62" y2="37"/>
+          </g>
+        </svg>
+      </div>
       <div id="map" role="region" aria-label="Map of home sales"></div>
     </main>
   </div>
@@ -232,6 +130,11 @@
           State College, share one street address. Every sale is kept and identified by its
           listing ID, so points at the same spot can be separate homes.
         </li>
+        <li>
+          <strong>Cluster colours.</strong> A cluster's colour shows how many sales it groups at
+          the current zoom level, from beige for a few to navy for many. It says nothing about
+          prices.
+        </li>
       </ul>
     </section>
   </div>
@@ -243,6 +146,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-  <script src="js/map.js"></script>
+  <!-- See the note on css/style.css above: change ?v= whenever js/map.js changes. -->
+  <script src="js/map.js?v=3"></script>
 </body>
 </html>
