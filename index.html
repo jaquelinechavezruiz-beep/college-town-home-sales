@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
   <!-- The ?v= number makes browsers fetch this file again when it changes, so a new page
        never runs with an old copy of the CSS kept in the browser's cache. -->
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div class="layout">
@@ -41,10 +41,10 @@
           <legend class="eyebrow">Price range</legend>
           <div class="price-inputs">
             <label class="visually-hidden" for="price-min">Minimum price in dollars</label>
-            <input id="price-min" type="number" inputmode="numeric" min="0" step="1000" placeholder="Min $">
+            <input id="price-min" type="text" inputmode="numeric" autocomplete="off" placeholder="Min $" aria-describedby="price-hint">
             <span class="price-dash" aria-hidden="true">–</span>
             <label class="visually-hidden" for="price-max">Maximum price in dollars</label>
-            <input id="price-max" type="number" inputmode="numeric" min="0" step="1000" placeholder="Max $">
+            <input id="price-max" type="text" inputmode="numeric" autocomplete="off" placeholder="Max $" aria-describedby="price-hint">
           </div>
           <p class="filter-hint" id="price-hint" aria-live="polite"></p>
         </fieldset>
@@ -215,7 +215,7 @@
           with no recorded year built drops out when you choose a year range, and stays in when
           Year built is set to Any. Distance bands are straight-line miles: under 1 is less than
           1.0; 1–3 is 1.0 up to but not including 3.0; 3–5 is 3.0 to 5.0; over 5 is more than 5.0.
-          Price limits include the amounts you type.
+          Price limits include the amounts you type; dollar signs and commas are fine, and a box that does not hold a whole dollar amount is ignored, with a note under the price boxes.
         </li>
         <li>
           <strong>Summary cards.</strong> The cards describe the sales that match the filters.
@@ -241,6 +241,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
   <!-- See the note on css/style.css above: change ?v= whenever js/map.js changes. -->
-  <script src="js/map.js?v=4"></script>
+  <script src="js/map.js?v=5"></script>
 </body>
 </html>

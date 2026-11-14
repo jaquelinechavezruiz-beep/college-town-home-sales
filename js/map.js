@@ -32,6 +32,7 @@ const controls = {
 let clusters = null;
 let sales = [];
 let totalSales = 0;
+let allBounds = null;   // area covering every sale: the map's starting view
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({
@@ -136,18 +137,32 @@ const YEAR = {
   ge2000: (v) => v >= 2000,
 };
 
-// Empty box = no limit. An unusable value (negative, not a number) also means no limit.
+// Reads a price box as a whole number of dollars. Dollar signs, commas and spaces
+// are allowed ("$250,000"). Returns null for an empty box (no limit) and NaN for
+// anything else (such as "250k"), which is ignored and explained under the boxes.
 function readPrice(input) {
-  if (input.value.trim() === "") return null;
-  const n = Number(input.value);
-  return Number.isFinite(n) && n >= 0 ? n : null;
+  const text = input.value.replace(/[$,\s]/g, "");
+  if (text === "") return null;
+  return /^\d+$/.test(text) ? Number(text) : NaN;
+}
+
+function priceHint(min, max) {
+  if (Number.isNaN(min) || Number.isNaN(max)) {
+    return "Enter prices as whole dollars, like 250000 or $250,000.";
+  }
+  if (min !== null && max !== null && min > max) return "Min price is higher than max price.";
+  return "";
 }
 
 function readFilters() {
+  const min = readPrice(controls.priceMin);
+  const max = readPrice(controls.priceMax);
   return {
     university: controls.university.value,
-    priceMin: readPrice(controls.priceMin),
-    priceMax: readPrice(controls.priceMax),
+    hint: priceHint(min, max),
+    // A box that is not a whole dollar amount sets no limit
+    priceMin: Number.isNaN(min) ? null : min,
+    priceMax: Number.isNaN(max) ? null : max,
     beds: controls.beds.value,
     distance: controls.distance.value,
     year: controls.year.value,
@@ -252,10 +267,16 @@ function drawMap(chosen, fit) {
     }).bindPopup(() => popupHtml(s))
   ));
 
+  // No matches: go back to the starting view of every sale, instead of staying
+  // on whatever area was shown before.
+  if (chosen.length === 0) {
+    map.fitBounds(allBounds, { padding: [20, 20] });
+    return;
+  }
   // Zoom to the sales only when the university changes or filters are reset, so
   // the map does not jump while someone types a price. Bounds come from the
   // coordinates: with chunked loading the cluster group is still empty here.
-  if (fit && chosen.length) {
+  if (fit) {
     const bounds = L.latLngBounds(chosen.map((s) => [s.latitude, s.longitude]));
     map.fitBounds(bounds, { padding: [20, 20] });
   }
@@ -266,10 +287,7 @@ function drawMap(chosen, fit) {
 function update({ fit = false } = {}) {
   const f = readFilters();
 
-  $("price-hint").textContent =
-    f.priceMin !== null && f.priceMax !== null && f.priceMin > f.priceMax
-      ? "The minimum is higher than the maximum."
-      : "";
+  $("price-hint").textContent = f.hint;
 
   const chosen = sales.filter((s) => matches(s, f));
   drawMap(chosen, fit);
@@ -319,6 +337,7 @@ fetch(DATA_URL)
       Object.fromEntries(data.columns.map((col, i) => [col, row[i]]))
     );
     totalSales = data.counts.rows_kept;
+    allBounds = L.latLngBounds(sales.map((s) => [s.latitude, s.longitude]));
 
     Object.entries(data.universities).forEach(([name, n]) => {
       const option = document.createElement("option");
